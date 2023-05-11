@@ -1,0 +1,294 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="ja">
+
+<!--
+    d3.jsの force-directed graph exampleから作成した。
+    https://observablehq.com/@d3/force-directed-graph
+    ForceGraph関数をコピーして大きくは以下の追加を行った。
+     1. エッジの方向が分かるように、エッジの中間地点に矢印風のを追加
+     2. ノードラベルが表示されるように追加
+     3. ForceGraphの外からノード位置計算処理を止めることができるようにした
+     4. exampleでは miserables 変数となっているノード、エッジデータを自作
+     5. ForceGraph関数のwidth, invalidationの引数を固定、削除とそれぞれ変更した。
+-->
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="keygraph.js"></script>
+    <script src="keygraph_debug.js"></script>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+        #text_hiragana {
+            tab-size: 4;
+        }
+    </style>
+</head>
+
+<body>
+    <label for="text_hiragana">ひらがな を入力して → を押してください。</label>
+    <textarea id="text_hiragana" placeholder="ひらがな を入力して → を押してください。" cols="60" rows="4"></textarea>
+    <button id="to_visible">→</button>
+
+    <script type="module">
+        // Copyright 2021 Observable, Inc.
+        // Released under the ISC license.
+        // https://observablehq.com/@d3/force-directed-graph
+        function ForceGraph({
+            nodes, // an iterable of node objects (typically [{id}, …])
+            links // an iterable of link objects (typically [{source, target}, …])
+        }, {
+            nodeId = d => d.id, // given d in nodes, returns a unique identifier (string)
+            nodeGroup, // given d in nodes, returns an (ordinal) value for color
+            nodeGroups, // an array of ordinal values representing the node groups
+            nodeTitle, // given d in nodes, a title string
+            nodeFill = "currentColor", // node stroke fill (if not using a group color encoding)
+            nodeStroke = "#fff", // node stroke color
+            nodeStrokeWidth = 1.5, // node stroke width, in pixels
+            nodeStrokeOpacity = 1, // node stroke opacity
+            nodeRadius = 15, // node radius, in pixels
+            nodeStrength,
+            linkSource = ({ source }) => source, // given d in links, returns a node identifier string
+            linkTarget = ({ target }) => target, // given d in links, returns a node identifier string
+            linkStroke = "#999", // link stroke color
+            linkStrokeOpacity = 0.6, // link stroke opacity
+            linkStrokeWidth = 1.5, // given d in links, returns a stroke width in pixels
+            linkStrokeLinecap = "round", // link stroke linecap
+            linkStrength,
+            colors = d3.schemeTableau10, // an array of color strings, for the node groups
+            width = 640, // outer width, in pixels
+            height = 400, // outer height, in pixels
+            invalidation // when this promise resolves, stop the simulation
+        } = {}) {
+            // Compute values.
+            const N = d3.map(nodes, nodeId).map(intern);
+            const LS = d3.map(links, linkSource).map(intern);
+            const LT = d3.map(links, linkTarget).map(intern);
+            if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
+            const T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
+            const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
+            const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
+            const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
+
+            // backup original nodes variable
+            const node0 = nodes;
+
+            // Replace the input nodes and links with mutable objects for the simulation.
+            nodes = d3.map(nodes, (_, i) => ({ id: N[i] }));
+            links = d3.map(links, (_, i) => ({ source: LS[i], target: LT[i] }));
+
+            // Compute default domains.
+            if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
+
+            // Construct the scales.
+            const color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
+
+            // Construct the forces.
+            const forceNode = d3.forceManyBody();
+            const forceLink = d3.forceLink(links).id(({ index: i }) => N[i]);
+            if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
+            if (linkStrength !== undefined) forceLink.strength(linkStrength);
+
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", forceLink)
+                .force("charge", forceNode)
+                .force("center", d3.forceCenter())
+                .on("tick", ticked);
+
+            const svg = d3.create("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("viewBox", [-width / 2, -height / 2, width, height])
+                .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
+
+            const link = svg.append("g")
+                .attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
+                .attr("stroke-opacity", linkStrokeOpacity)
+                .attr("stroke-width", typeof linkStrokeWidth !== "function" ? linkStrokeWidth : null)
+                .attr("stroke-linecap", linkStrokeLinecap)
+                .selectAll("line")
+                .data(links)
+                .join("line");
+
+            // エッジの方向が分かるように、エッジの中間地点に矢印風の線を追加
+            // 以下の edge1, edge2 で実現される。
+            const edge1 = svg.append("g")
+                .attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
+                .attr("stroke-opacity", linkStrokeOpacity)
+                .attr("stroke-width", typeof linkStrokeWidth !== "function" ? linkStrokeWidth : null)
+                .attr("stroke-linecap", linkStrokeLinecap)
+                .selectAll("line")
+                .data(links)
+                .join("line")
+            const edge2 = svg.append("g")
+                .attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
+                .attr("stroke-opacity", linkStrokeOpacity)
+                .attr("stroke-width", typeof linkStrokeWidth !== "function" ? linkStrokeWidth : null)
+                .attr("stroke-linecap", linkStrokeLinecap)
+                .selectAll("line")
+                .data(links)
+                .join("line")
+
+            const node = svg.append("g")
+                .attr("fill", nodeFill)
+                .attr("stroke", nodeStroke)
+                .attr("stroke-opacity", nodeStrokeOpacity)
+                .attr("stroke-width", nodeStrokeWidth)
+                .selectAll("circle")
+                .data(nodes)
+                .join("circle")
+                .attr("r", nodeRadius)
+                .call(drag(simulation));
+
+            // ノードラベルを追加、svgのtextエレメントを使用する。
+            const text = svg.append("g")
+                .selectAll("text")
+                .data(nodes)
+                .join("text")
+                .text(({ index: i }) => node0[i].text);
+
+            if (W) link.attr("stroke-width", ({ index: i }) => W[i]);
+            if (L) link.attr("stroke", ({ index: i }) => L[i]);
+            if (G) node.attr("fill", ({ index: i }) => color(G[i]));
+            if (T) node.append("title").text(({ index: i }) => T[i]);
+            if (invalidation != null) invalidation.then(() => simulation.stop());
+
+            function intern(value) {
+                return value !== null && typeof value === "object" ? value.valueOf() : value;
+            }
+
+            const angle = (d, sign) => {
+                return Math.atan2(d.source.y - d.target.y, d.source.x - d.target.x) + sign * Math.PI / 5
+            }
+
+            function ticked() {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                // 画素の位置を計算したときに呼び出される ticked 関数で、
+                // text 要素の x,y attributeを変更する。書き方は上の node 変数のマネ
+                text
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+
+                // エッジの矢印位置を計算する。line 変数と同じような感じで書いている。
+                edge1
+                    .attr("x1", d => (d.source.x + d.target.x) / 2)
+                    .attr("y1", d => (d.source.y + d.target.y) / 2)
+                    .attr("x2", d => 5 * Math.cos(angle(d, 1)) + (d.source.x + d.target.x) / 2)
+                    .attr("y2", d => 5 * Math.sin(angle(d, 1)) + (d.source.y + d.target.y) / 2);
+                edge2
+                    .attr("x1", d => (d.source.x + d.target.x) / 2)
+                    .attr("y1", d => (d.source.y + d.target.y) / 2)
+                    .attr("x2", d => 5 * Math.cos(angle(d, -1)) + (d.source.x + d.target.x) / 2)
+                    .attr("y2", d => 5 * Math.sin(angle(d, -1)) + (d.source.y + d.target.y) / 2);
+            }
+
+            function drag(simulation) {
+                function dragstarted(event) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.subject.x;
+                    event.subject.fy = event.subject.y;
+                }
+
+                function dragged(event) {
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                }
+
+                function dragended(event) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
+                return d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended);
+            }
+
+            // simulationを止める stop 関数も戻り値に含める。
+            return Object.assign(svg.node(), { scales: { color }, stop: simulation.stop });
+        }
+
+        // d3で描画されるノード、エッジ一覧、あとでデータが追加される。
+        const data = {
+            nodes: [],
+            links: [],
+        };
+
+        // DAGにする ひらがな
+        const hiragana = location.search.length > 0 ? decodeURI(location.search.match(/^\??(.*)/)[1]) : "ひっしゅう";
+        document.getElementById("text_hiragana").value = hiragana;
+
+        // キーグラフの生成
+        keygraph.build(hiragana);
+
+        console.log(`キーグラフの総ノード数 ${keygraph._chains.filter(e => e._merged === undefined).length}`);
+        keygraph_debug.enum_routes(keygraph);
+        keygraph_debug.check_merge_parents(keygraph);
+        keygraph_debug.check_children_dup(keygraph);
+        keygraph_debug.check_merged_and_consistency_parents_childs(keygraph);
+
+        // キーグラフのノード、リンクを data 変数に追加していく。
+        // チェインを縦型探索でループして、重複が無いようにチェックしながらノードとエッジを追加する。
+        const add_data = (node, parent) => {
+            if (data.nodes.filter(e => e.id === node._node_id).length === 0) {
+                data.nodes.push({
+                    id: node._node_id,
+                    text: `${node._key} ${node._seq_ptr === undefined ? "" : keygraph._seq.substring(node._seq_ptr - 1, node._seq_ptr)}`,    // label
+                    group: 1
+                });
+            }
+            if (parent !== undefined && data.links.filter(e => e.source === parent._node_id && e.target === node._node_id).length === 0) {
+                data.links.push({ source: parent._node_id, target: node._node_id, value: 1 });
+            }
+            node._children?.forEach(m => {
+                add_data(m, node);
+            });
+        };
+        add_data(keygraph._chain_head);
+
+        // グラフを描画する。
+        const chart = ForceGraph(data, {
+            nodeId: d => d.id,
+            nodeGroup: d => d.group,
+            nodeTitle: d => `${d.id}\n${d.group}`,
+            linkStrokeWidth: l => Math.sqrt(l.value),
+            width: window.innerWidth, // 元のexampleから、ブラウザのサイズに変更している
+            height: window.innerHeight*0.8,
+            linkStrength: 0.05, // この数値を小さくするとばねの自然長が伸びる（と思う）
+        });
+        document.body.appendChild(chart);
+
+        // s キーを押したときに、シミュレーション（ノードの位置計算の動作）はストップする。
+        // 再開するには、どこかのノードをマウスで移動させる。
+        document.body.addEventListener("keydown", e => {
+            ({
+                s: chart.stop,
+                Tab: () => {
+                    e.preventDefault();
+                    const [o,cp] = [e.target,e.target.selectionStart];
+                    o.value = o.value.substr( 0, cp )+"\t"+o.value.substr( cp, o.value.length );
+                    o.selectionEnd = cp+1;
+                },
+            })[e.key]?.(e);
+        });
+
+        document.getElementById("to_visible").addEventListener("click", e => {
+            console.log(document.getElementById("text_hiragana").value);
+            location.href = location.pathname + "?" + encodeURI(document.getElementById("text_hiragana").value);
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="ja">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!--
+        tooltipのアイコン用
+        <i>でアイコンボタンを表示させる。詳しくは、https://fontawesome.com/
+    -->
+    <script src="https://kit.fontawesome.com/13ddd76903.js" crossorigin="anonymous"></script>
+    <style>
+        #test_panel_container {
+            display: flex;
+        }
+
+        .text_panel {
+            width: 48vw;
+        }
+
+        .sp {
+            width: 10vw;
+        }
+
+        .header_label {
+            display: block;
+        }
+
+        textarea {
+            resize: none;
+            overflow: hidden;
+            width: 46vw;
+            line-height: 12px;
+        }
+
+        #typing_url_panel {
+            background: lightgrey;
+        }
+
+        #typing_url_appendix_panel {
+            display: none;
+        }
+
+        #appendix_panel {
+            text-align: end;
+            font-size: small;
+        }
+
+        /* tooltipのボタン用 */
+        .tooltip {
+            position: relative;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .tooltip p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .description {
+            display: none;
+            position: absolute;
+            padding: 0px;
+            font-size: 12px;
+            line-height: 1.6em;
+            color: #fff;
+            border-radius: 5px;
+            background: #000;
+            width: 50px;
+        }
+
+        .tooltip:hover .description {
+            display: inline-block;
+            top: 50px;
+            left: -20px;
+        }
+
+        /* tooltipのボタン用 (ここまで)*/
+    </style>
+</head>
+
+<body>
+    <div id="test_panel_container">
+        <div id="text_disp_panel" class="text_panel">
+            <label for="text_disp" class="header_label">ゲームでは行ごとに文字が表示されます</label>
+            <textarea id="text_disp" placeholder="タイプする文字を入力してください。"></textarea>
+        </div>
+        <div class="sp"></div>
+        <div id="text_ruby_panel" class="text_panel">
+            <label for="text_ruby" class="header_label">自動変換を編集することもできます</label>
+            <textarea id="text_ruby" placeholder="タイプする文字の「ひらがな」が自動で作成されます。"></textarea>
+        </div>
+    </div>
+    <div id="typing_url_group">
+        <div id="typing_url_panel"><span id="typing_url"></span></div>
+        <div id="typing_url_appendix_panel">
+            <span id="typing_url_length"></span>
+        </div>
+    </div>
+
+    <div id="appendix_panel">
+        <details><summary>special thanks</summary>
+            <div>ひらがな への自動変換には、<a href="https://labs.goo.ne.jp/">gooラボ</a>のひらがな化APIを使用させていただいています。</div>
+            <div>URL短縮には、<a href="https://tinyurl.com/app/dev">TinyURL OpenApi</a>を使用させていただいています。</div>
+        </details>
+    </div>
+
+</body>
+<script>
+    // tinyurl api による URL短縮 https://tinyurl.com/app/dev
+    const get_short_url = async (long_url) => {
+        const res = await fetch("https://api.tinyurl.com/create?api_token=ygENtAttXLXu7eJWioTR2fnGwDbBjm1H4gbsvOl74KbcwjNRv4zvnGKCioPu", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                "url": long_url,
+            }),
+        });
+        return (await res.json()).data.tiny_url;
+    };
+
+    // ひらがなの取得
+    const get_hiragana = async (kanji) => {
+        if (kanji.length === 0) {
+            return "";
+        }
+        const res = await fetch("https://labs.goo.ne.jp/api/hiragana", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                app_id: "a984b5963de74b292e53d3d410380e289d1ce737105f75c9a06ff306227a712d",
+                sentence: kanji,
+                output_type: "hiragana",
+            }),
+        });
+        return (await res.json()).converted.replaceAll(" ", "");
+    };
+
+    // 変換した"ひらがな"を保管する。編集されると、この変数の値も変わる。
+    // {edited:false,src:"",translated:""}
+    let translated_rubies = [];
+
+    // html elements
+    const elems = ["text_disp", "text_ruby", "typing_url_panel", "typing_url", "typing_url_length", "typing_url_appendix_panel"]
+        .reduce((a, e) => ({ ...a, [[e]]: document.getElementById(e) }), {});
+
+    // ひらがな変換をスケジューリングする。
+    const set_to_run_translater = (function () {
+        const delay_ms = 1000;
+        let timer_id = undefined;
+        return function () {
+            clearTimeout(timer_id);
+            timer_id = setTimeout(async () => {
+                // 編集したところを除き、タイプする文字の日本語が作成されていないところは、gooラボでひらがなを取得する。
+                translated_rubies = await Promise.all(elems["text_disp"].value.split("\n").map(async (src, i) => {
+                    const rec = translated_rubies[i] ?? { src, translated: await get_hiragana(src), edited: false };
+                    rec.translated = (rec.src !== src || (rec.edited === false && rec.translated.length === 0)) ?
+                        await get_hiragana(src) : rec.translated;
+                    rec.src = src;
+                    return rec;
+                }))
+                elems["text_ruby"].value = translated_rubies.map(e => e.translated).join("\n");
+
+                if (elems["text_ruby"].value.length === 0) {
+                    // 文字がテキストエリアに無い場合は、typing_gameのurlを初期化する。
+                    elems["typing_url"].innerText = "";
+                    elems["typing_url_appendix_panel"].style.display = "none";
+                } else {
+                    // typing_game の url を作成する。
+                    const base = location.href.split("/").slice(0, -1).join("/");
+                    const filename = "simple_typing_game.html";
+                    elems["typing_url"].innerText = [base, filename].join("/") + "?" +
+                        encodeURI(JSON.stringify(translated_rubies.map(e => [e.src, e.translated])));
+                    elems["typing_url_length"].innerText = `URLの残り文字数 ${4096 - elems["typing_url"].innerText.length} (最大4096)`;
+                    elems["typing_url_appendix_panel"].style.display = "inline";
+                }
+            }, delay_ms);
+        }
+    })();
+
+    // タイプする文字の入力後処理
+    elems["text_disp"].addEventListener("input", e => {
+        const getScrollHeight = (e) => {
+            // 一度 height を 0 にしてから取得するもよう...
+            e.srcElement.style.height = 0;
+            return e.srcElement.scrollHeight;
+        }
+        e.srcElement.style.height = getScrollHeight(e) + "px";
+        elems["text_ruby"].style.height = e.srcElement.style.height;
+
+        set_to_run_translater();
+    });
+    // ひらがなの編集後処理
+    elems["text_ruby"].addEventListener("input", e => {
+        elems["text_ruby"].value.split("\n").forEach((tr, i) => {
+            translated_rubies[i].edited = tr.length > 0 && translated_rubies[i].translated !== tr;
+            translated_rubies[i].translated = tr;
+        })
+        set_to_run_translater();
+    });
+
+    // urlのコピー機能
+    // 配列の最初でオブジェクトを作成して、そのあとの関数で値をセットする。
+    Array.prototype.a2e = function () { return this.reduce((e, f) => { f(e); return e; }); }
+    elems["typing_url_panel"].style.position = "relative";
+    elems["typing_url_panel"].addEventListener("mouseenter", event => {
+        const create_icon_button = (cls, text, onclick) => {
+            const elem = [
+                document.createElement("button"),
+                e => e.classList.add("icon_button", "tooltip"),
+                e => e.appendChild([
+                    document.createElement("p"),
+                    e => e.appendChild([
+                        document.createElement("i"),
+                        e => e.classList.add(...cls),
+                    ].a2e()),
+                ].a2e()),
+                e => e.appendChild([
+                    document.createElement("div"),
+                    e => e.classList.add("description"),
+                    e => e.innerText = text,
+                ].a2e()),
+            ].a2e();
+            elem.addEventListener("click", onclick);
+            return elem;
+        };
+        const cp = create_icon_button(["far", "fa-copy"], "URLのコピー", async () => {
+            if (location.protocol != "https:") {
+                alert("コピーを使うためには、httpsによってこのページを開いてください。");
+            } else {
+                await navigator.clipboard.writeText(elems["typing_url"].innerText);
+                console.log("クリップボードにコピーしました。", elems["typing_url"].innerText);
+            }
+        });
+        const st = create_icon_button(["fa-solid", "fa-down-left-and-up-right-to-center"], "短縮URL", async () => {
+            if (elems["typing_url"].innerText.startsWith("https://tinyurl.com/") === false) {
+                elems["typing_url"].innerText = await get_short_url(elems["typing_url"].innerText);
+            }
+        });
+        const pl = create_icon_button(["fa-solid", "fa-play"], "実行", () => {
+            window.open(elems["typing_url"].innerText, "_blank");
+        });
+
+        [pl, st, cp].forEach((e, i) => {
+            Object.entries({ position: "absolute", left: (20 + 36 * i) + "px", top: "4px" }).
+                forEach(ei => e.style[ei[0]] = ei[1]);
+            event.target.appendChild(e);
+        })
+    });
+    elems["typing_url_panel"].addEventListener("mouseleave", e => {
+        document.querySelectorAll(".icon_button").forEach(e => e.remove());
+    })
+</script>
+
+</html>
