@@ -121,7 +121,7 @@ const keygraph = {
         // 入力自動補完の実行
         this._autocomplete_fired.forEach(a => a.key?.(key, this.next.bind(this)));
 
-        const nx = this._chain_cur.find_child(key);
+        const nx = this._chain_cur?.find_child(key);
         if (nx === undefined) {
             return false;
         }
@@ -175,7 +175,7 @@ const keygraph = {
 
     // すべての文字を打ち終わったかの判定
     is_finished: function () {
-        return this._seq_ptr_cur === this._seq.length;
+        return this._seq_ptr_cur === this._seq?.length;
     },
     // これまでに正解として打ったキーの履歴
     key_done: function () {
@@ -354,9 +354,9 @@ const keygraph = {
         { char: "っすぉ", keys: ["sswo"] },
         { char: "っちゃ", keys: ["ttya", "ccha"] },
         { char: "っちぃ", keys: ["ttyi"] },
-        { char: "っちゅ", keys: ["ttyu", "cchu"] },
-        { char: "っちぇ", keys: ["ttye", "cche"] },
-        { char: "っちょ", keys: ["ttyo", "ccho"] },
+        { char: "っちゅ", keys: ["ttyu", "cchu", "ccyu"] },
+        { char: "っちぇ", keys: ["ttye", "cche", "ccye"] },
+        { char: "っちょ", keys: ["ttyo", "ccho", "ccyo"] },
         { char: "っぢゃ", keys: ["ddya"] },
         { char: "っぢぃ", keys: ["ddyi"] },
         { char: "っぢゅ", keys: ["ddyu"] },
@@ -473,9 +473,9 @@ const keygraph = {
         { char: "すぉ", keys: ["swo"] },
         { char: "ちゃ", keys: ["tya", "cha"] },
         { char: "ちぃ", keys: ["tyi"] },
-        { char: "ちゅ", keys: ["tyu", "chu"] },
-        { char: "ちぇ", keys: ["tye", "che"] },
-        { char: "ちょ", keys: ["tyo", "cho"] },
+        { char: "ちゅ", keys: ["tyu", "chu", "cyu"] },
+        { char: "ちぇ", keys: ["tye", "che", "cye"] },
+        { char: "ちょ", keys: ["tyo", "cho", "cyo"] },
         { char: "ぢゃ", keys: ["dya"] },
         { char: "ぢぃ", keys: ["dyi"] },
         { char: "ぢゅ", keys: ["dyu"] },
