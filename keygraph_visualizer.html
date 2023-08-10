@@ -14,6 +14,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>keygraph visualizer</title>
     <script src="keygraph.js"></script>
     <script src="keygraph_debug.js"></script>
 
@@ -23,13 +24,25 @@
         #text_hiragana {
             tab-size: 4;
         }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .header :last-child {
+            margin-left: auto;
+        }
     </style>
 </head>
 
 <body>
-    <label for="text_hiragana">ひらがな を入力して → を押してください。</label>
-    <textarea id="text_hiragana" placeholder="ひらがな を入力して → を押してください。" cols="60" rows="4"></textarea>
-    <button id="to_visible">→</button>
+    <div class="header">
+        <label for="text_hiragana">ひらがな を入力して → を押してください。</label>
+        <textarea id="text_hiragana" placeholder="ひらがな を入力して → を押してください。" cols="60" rows="4"></textarea>
+        <button id="to_visible">→</button>
+        <span id="console">aa</span>
+    </div>
 
     <script type="module">
         // Copyright 2021 Observable, Inc.
@@ -234,7 +247,7 @@
         keygraph.build(hiragana);
 
         console.log(`キーグラフの総ノード数 ${keygraph._chains.filter(e => e._merged === undefined).length}`);
-        keygraph_debug.enum_routes(keygraph);
+        document.getElementById("console").innerText = `総ルート数: ${keygraph_debug.enum_routes(keygraph)}`;
         keygraph_debug.check_merge_parents(keygraph);
         keygraph_debug.check_children_dup(keygraph);
         keygraph_debug.check_merged_and_consistency_parents_childs(keygraph);
@@ -265,7 +278,7 @@
             nodeTitle: d => `${d.id}\n${d.group}`,
             linkStrokeWidth: l => Math.sqrt(l.value),
             width: window.innerWidth, // 元のexampleから、ブラウザのサイズに変更している
-            height: window.innerHeight*0.8,
+            height: window.innerHeight * 0.8,
             linkStrength: 0.05, // この数値を小さくするとばねの自然長が伸びる（と思う）
         });
         document.body.appendChild(chart);
@@ -277,9 +290,9 @@
                 s: chart.stop,
                 Tab: () => {
                     e.preventDefault();
-                    const [o,cp] = [e.target,e.target.selectionStart];
-                    o.value = o.value.substr( 0, cp )+"\t"+o.value.substr( cp, o.value.length );
-                    o.selectionEnd = cp+1;
+                    const [o, cp] = [e.target, e.target.selectionStart];
+                    o.value = o.value.substr(0, cp) + "\t" + o.value.substr(cp, o.value.length);
+                    o.selectionEnd = cp + 1;
                 },
             })[e.key]?.(e);
         });
