@@ -81,8 +81,31 @@
         { disp: "作ることが", str: "つくることが" },
         { disp: "できます", str: "できます" },
     ];
+    // プログラムをタイプするときに、スペース4つをauto completeで対応するための auto complete設定を入れる配列
+    const keygraph_autocompletes = [];
+    // url引数でタイプする文字が指定されているときに、それをdatasetにする。
     if (location.search.length > 0) {
-        dataset = JSON.parse(decodeURIComponent(location.search.match(/^\??(.*)/)[1])).map(e => ({ disp: e[0], str: e[1] }));
+        dataset = JSON.parse(decodeURIComponent(location.search.match(/^\??(.*)/)[1])).map(e => ({ disp: e[1], str: e[0] }));
+
+        // プログラムをタイプするときの画面変更処理
+        if (dataset[0].disp === undefined) {
+            // 漢字表記、ひらがな表記の表示部分を消去
+            document.getElementById("seq").style.display = "none";
+            // 文字中央寄せ→左寄せ
+            document.getElementById("panel").style.textAlign = "left";
+
+            // スペース4つはauto completeで自動で先に進める
+            keygraph_autocompletes.push(
+                {
+                    seq_pattern: /^    /,
+                    fired: (key, next) => {
+                        next(" ");
+                        next(" ");
+                        next(" ");
+                        next(" ");
+                    },
+                },);
+        }
     }
 
     // タイプする文章の管理
@@ -137,6 +160,7 @@
         document.getElementById("seq_candidates").innerText = keygraph.seq_candidates() ?? "";
     };
 
+
     // キーが押されたときの処理
     const keydown = e => {
         // タブキーの場合は、入力要素が他に移動しないようにデフォルト処理を抑制する。
@@ -174,6 +198,7 @@
     const reset_game = (msg) => {
         document.getElementById("time").innerText = tm.fm(tm.tm());
         keygraph.reset();
+        keygraph_autocompletes.forEach(a => keygraph.register_autocomplete(a))
         disp(msg);
         tm.clear();
         dataset_mgr.reset();

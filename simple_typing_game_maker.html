@@ -85,6 +85,9 @@
         <div id="text_disp_panel" class="text_panel">
             <label for="text_disp" class="header_label">ゲームでは行ごとに文字が表示されます</label>
             <textarea id="text_disp" placeholder="タイプする文字を入力してください。"></textarea>
+
+            <label for="texttype_program">改行を含めて1つのタイピング文字とする</label>
+            <input type="checkbox" id="texttype_program">
         </div>
         <div class="sp"></div>
         <div id="text_ruby_panel" class="text_panel">
@@ -100,7 +103,8 @@
     </div>
 
     <div id="appendix_panel">
-        <details><summary>special thanks</summary>
+        <details>
+            <summary>special thanks</summary>
             <div>ひらがな への自動変換には、<a href="https://labs.goo.ne.jp/">gooラボ</a>のひらがな化APIを使用させていただいています。</div>
             <div>URL短縮には、<a href="https://tinyurl.com/app/dev">TinyURL OpenApi</a>を使用させていただいています。</div>
         </details>
@@ -142,7 +146,7 @@
     let translated_rubies = [];
 
     // html elements
-    const elems = ["text_disp", "text_ruby", "typing_url_panel", "typing_url", "typing_url_length", "typing_url_appendix_panel"]
+    const elems = ["text_disp", "text_ruby", "typing_url_panel", "typing_url", "typing_url_length", "typing_url_appendix_panel", "texttype_program"]
         .reduce((a, e) => ({ ...a, [[e]]: document.getElementById(e) }), {});
 
     // ひらがな変換をスケジューリングする。
@@ -171,7 +175,11 @@
                     const base = location.href.split("/").slice(0, -1).join("/");
                     const filename = "simple_typing_game.html";
                     elems["typing_url"].innerText = [base, filename].join("/") + "?" +
-                        encodeURIComponent(JSON.stringify(translated_rubies.map(e => [e.src, e.translated])));
+                        encodeURIComponent(JSON.stringify(
+                            elems["texttype_program"].checked ? [[translated_rubies.map(e => e.translated).join("\n")]] :
+                                translated_rubies.map(e => [e.translated, e.src])
+
+                        ));
                     elems["typing_url_length"].innerText = `URLの残り文字数 ${4096 - elems["typing_url"].innerText.length} (最大4096)`;
                     elems["typing_url_appendix_panel"].style.display = "inline";
                 }
@@ -199,6 +207,11 @@
         })
         set_to_run_translater();
     });
+    // 改行を含めて1文章とするチェックボックスを変更した後
+    elems["texttype_program"].addEventListener("change", e => {
+        set_to_run_translater();
+    })
+
 
     // urlのコピー機能
     // 配列の最初でオブジェクトを作成して、そのあとの関数で値をセットする。
