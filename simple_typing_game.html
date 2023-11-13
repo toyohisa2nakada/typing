@@ -2,6 +2,9 @@
 <html lang="ja">
 
 <head>
+    <!-- Google tag (gtag.js) pecode.com用 GA4対応 -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-TYCFFNDCSV"></script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-TYCFFNDCSV');</script> -->
 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>simple typing game</title>
@@ -83,7 +86,7 @@
         { disp: "できます", str: "できます" },
     ];
     if (location.search.length > 0) {
-        dataset = JSON.parse(decodeURI(location.search.match(/^\??(.*)/)[1])).map(e => ({ disp: e[0], str: e[1] }));
+        dataset = JSON.parse(decodeURIComponent(location.search.match(/^\??(.*)/)[1])).map(e => ({ disp: e[0], str: e[1] }));
     }
 
     // タイプする文章の管理

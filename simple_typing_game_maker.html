@@ -2,7 +2,12 @@
 <html lang="ja">
 
 <head>
+    <!-- Google tag (gtag.js) pecode.com用 GA4対応 -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-TYCFFNDCSV"></script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-TYCFFNDCSV');</script> -->
+
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>simple typing game maker</title>
     <!--
         tooltipのアイコン用
         <i>でアイコンボタンを表示させる。詳しくは、https://fontawesome.com/
@@ -170,7 +175,7 @@
                     const base = location.href.split("/").slice(0, -1).join("/");
                     const filename = "simple_typing_game.html";
                     elems["typing_url"].innerText = [base, filename].join("/") + "?" +
-                        encodeURI(JSON.stringify(translated_rubies.map(e => [e.src, e.translated])));
+                        encodeURIComponent(JSON.stringify(translated_rubies.map(e => [e.src, e.translated])));
                     elems["typing_url_length"].innerText = `URLの残り文字数 ${4096 - elems["typing_url"].innerText.length} (最大4096)`;
                     elems["typing_url_appendix_panel"].style.display = "inline";
                 }
