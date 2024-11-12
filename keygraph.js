@@ -85,27 +85,35 @@ const keygraph = {
         while ((() => { n = open.shift(); return n; })() !== undefined) {
             merge_parents(n.parents);
             const parents = n.parents.filter(e => e._merged === undefined);
-            this._char_keys_table.filter(ckeys => this._seq.substring(n.p).startsWith(ckeys.char))/*.sort((e0, e1) => e0.char.length - e1.char.length)*/.forEach(ckeys => {
-                const keys = typeof (ckeys.keys) === "function" ? ckeys.keys.bind(this)(this._seq.substring(n.p)) : ckeys.keys;
-                const p1 = n.p + ckeys.char.length;
-                const ch_es = [];
-                // "っし" sshi のように2文字は優先的に keygraph.key_candidatesで選ばれるこれからタイプするキーパターンの代表に選ばれやすいように
-                // _childrenの先頭に追加する。ただし、ノードマージで_childrenの順序は変わるので、必ず選ばれるというわけではない。
-                const older = false;//ckeys.char.length === 2;
-                (older ? [...keys].reverse() : keys).forEach(key => {
-                    parents.forEach(parent => {
-                        ch_es.push(add_chains(parent, key, older));
-                        ch_es.slice(-1)[0].set_seq_ptr(p1);
+            const remained_seq = this._seq.substring(n.p);
+            if (remained_seq.length > 0) {
+                const ckeys_set = this._char_keys_table.filter(ckeys => remained_seq.startsWith(ckeys.char));
+                if (ckeys_set.length === 0) {
+                    console.log(`WARNING: _char_keys_tableに無い文字を使用しています。 [${this._seq.substring(n.p)}]`);
+                    return;
+                }
+                ckeys_set.forEach(ckeys => {
+                    const keys = typeof (ckeys.keys) === "function" ? ckeys.keys.bind(this)(this._seq.substring(n.p)) : ckeys.keys;
+                    const p1 = n.p + ckeys.char.length;
+                    const ch_es = [];
+                    // "っし" sshi のように2文字は優先的に keygraph.key_candidatesで選ばれるこれからタイプするキーパターンの代表に選ばれやすいように
+                    // _childrenの先頭に追加する。ただし、ノードマージで_childrenの順序は変わるので、必ず選ばれるというわけではない。
+                    const older = false;//ckeys.char.length === 2;
+                    (older ? [...keys].reverse() : keys).forEach(key => {
+                        parents.forEach(parent => {
+                            ch_es.push(add_chains(parent, key, older));
+                            ch_es.slice(-1)[0].set_seq_ptr(p1);
+                        });
                     });
+                    // openに次の処理を追加
+                    const m = open.find(e => e.p === p1) ?? (() => { const m = { p: p1, parents: [] }; open.push(m); return m; })();
+                    m.parents.push(...ch_es);
                 });
-                // openに次の処理を追加
-                const m = open.find(e => e.p === p1) ?? (() => { const m = { p: p1, parents: [] }; open.push(m); return m; })();
-                m.parents.push(...ch_es);
-            });
-            // _char_keys_tableから該当する要素を抽出したあとで char の文字数の昇順でソートして上の処理をすれば子のソート処理は必要ない。
-            // key_candidateで複数のキーパターンから1つが選ばれる基準が _char_keys_table の要素順になるためには、ここでソート処理をして、_char_keys_tableから要素を抽出して
-            // 処理をする場合は何もソートをしないようにする。
-            open.sort((e0, e1) => e0.p - e1.p);
+                // _char_keys_tableから該当する要素を抽出したあとで char の文字数の昇順でソートして上の処理をすれば子のソート処理は必要ない。
+                // key_candidateで複数のキーパターンから1つが選ばれる基準が _char_keys_table の要素順になるためには、ここでソート処理をして、_char_keys_tableから要素を抽出して
+                // 処理をする場合は何もソートをしないようにする。
+                open.sort((e0, e1) => e0.p - e1.p);
+            }
         }
 
         // 現在のタイプ位置のセット
