@@ -2,4 +2,4 @@
 * 例えば「ひっしゅう」は、hisshuu, hisshilyuu, hiltushilyuuなどと複数の入力パターンがありますが、それらを網羅した入力正誤判定を行うことができます。
 * ひらがな と、ローマ字のどこまでをすでに打ったのかを得ることができます。
 
-詳しくは[Qiitaの記事](https://qiita.com/toyohisa/items/b685ccf627c12ece6dbd)をご覧ください。
+詳しくは[Qiitaの記事](https://qiita.com/toyohisa/items/17c8c0c8342b894e2470)をご覧ください。
