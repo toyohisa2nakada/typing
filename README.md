@@ -65,5 +65,21 @@ simple_typing_game.htmlでは、keygraph.js以外にsound.jsファイルも読�
 タイピングゲームでは、タイプするローマ字を画面に表示することがよくあります。例えば「ひっしゅう」ならば「hisshu」という文字が表示されて、すでに打った文字が暗くなったりしてどこまで打ったのかをユーザが分かるようにします。この「hisshu」に相当する文字列を取得するのが keygraph.key_candidate 関数です。keygraph.key_candidateは、「hisshu」や「hisshilyuu」のように複数のパターンから「1つ」が選ばれて文字列として戻るわけですが、その選ばれる基準は、keygraph.jsファイルの下の方で定義されている_char_keys_tableリストの順序で決まります。リストの上の方、また同じ ひらがな ならば keys変数で定義されたキー候補の左の方が優先されます。例えば「っしゅ」の場合、_char_keys_tableリストの「っ」「っし」「っしゅ」の3つがまず候補になるのですが、最もリストの上にある「っしゅ」が選ばれます。そして「っしゅ」のキー候補である["ssyu", "sshu"]のうち左側の"ssyu"が選ばれることになります。例えば「っし」が_char_keys_tableリストの上位にあれば「っし」のkeys変数の左側が選ばれ、そして残りの文字の「ゅ」の定義の中でkeys変数の左側のローマ字が選ばれて全部のローマ字が完成するということになります。よって画面に表示するローマ字を変更したい場合、_char_keys_tableリストのデータの順序を入れ替えることで対応できます。
 </div></details>
 
+# 4. タイプする文字を自分で作成するアプリ
+
+[オンラインデモ](https://toyohisa2nakada.github.io/typing/simple_typing_game_maker.html)
+
+タイピングゲームのアプリ例である simple_typing_game.html は、URL引数によってタイプする文字を指定することができます。以下のは、そのURL引数を作成するアプリの例です。
+
+![image.png](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/275020/faa21fa5-edb7-3749-7af3-460ffc7b55d0.png)
+↑ の左側で漢字混じりの日本語を打つと、右側に ひらがな が自動作成されます。自動変換された ひらがな は、間違えていれば自分で修正することもできます。登録した文字を打つタイピングゲームのURLは画面下に表示され、URLにマウスをもっていくと「実行」「URLの短縮」「URLのコピー」のそれぞれのボタンが表示されます。URLの文字数が最大の4096文字になるまで文字を追加することができます。
+
+<details><summary>ひらがな 自動変換について</summary><div>
+ひらがな への自動変換は、<a href="https://labs.goo.ne.jp/">gooらぼ</a>の ひらがな化APIを使用させていただいています。</div></details>
+
+<details><summary>短縮URLについて</summary><div>
+URL短縮には、<a href="https://tinyurl.com/app/dev">TinyURL OpenApi</a>を使用させていただいています。</div></details>
+
+
 
 詳しくは[Qiitaの記事](https://qiita.com/toyohisa/items/17c8c0c8342b894e2470)をご覧ください。
