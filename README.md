@@ -11,6 +11,57 @@
 * [休暇願を上司に送る？](https://toyohisa2nakada.github.io/typing/simple_typing_game.html?%5B%5B%22%E3%81%8A%E3%81%A4%E3%81%8B%E3%82%8C%E3%81%95%E3%81%BE%E3%81%A7%E3%81%99%E3%80%82%22%2C%22%E3%81%8A%E7%96%B2%E3%82%8C%E6%A7%98%E3%81%A7%E3%81%99%E3%80%82%22%5D%2C%5B%22%E3%81%93%E3%81%AE%E3%81%9F%E3%81%B3%22%2C%22%E3%81%93%E3%81%AE%E5%BA%A6%22%5D%2C%5B%22%E3%82%86%E3%81%86%E3%81%8D%E3%82%85%E3%81%86%E3%81%8D%E3%82%85%E3%81%86%E3%81%8B%E3%82%92%22%2C%22%E6%9C%89%E7%B5%A6%E4%BC%91%E6%9A%87%E3%82%92%22%5D%2C%5B%22%E3%81%97%E3%82%85%E3%81%A8%E3%81%8F%E3%81%97%E3%81%9F%E3%81%8F%22%2C%22%E5%8F%96%E5%BE%97%E3%81%97%E3%81%9F%E3%81%8F%22%5D%2C%5B%22%E3%81%93%E3%81%93%E3%81%AB%22%2C%22%E3%81%93%E3%81%93%E3%81%AB%22%5D%2C%5B%22%E3%81%8A%E3%81%A8%E3%81%A9%E3%81%91%E3%81%84%E3%81%9F%E3%81%97%E3%81%BE%E3%81%99%E3%80%82%22%2C%22%E3%81%8A%E5%B1%8A%E3%81%91%E3%81%84%E3%81%9F%E3%81%97%E3%81%BE%E3%81%99%E3%80%82%22%5D%5D)
 * [Pythonプログラム](https://toyohisa2nakada.github.io/typing/simple_typing_game.html?%5B%5B%22import%20random%5Cnrandom.seed(0)%5Cnar%20%3D%20%5Brandom.random()%20for%20i%20in%20range(16)%5D%5Cnprint(f%5C%22list%3D%7Bar%7D%5C%22)%5Cnsum_gusu_idx%20%3D%200%5Cnfor%20i%2Cv%20in%20enumerate(ar)%3A%5Cn%20%20%20%20if%20i%20%25%202%20%3D%3D%200%3A%5Cn%20%20%20%20%20%20%20%20sum_gusu_idx%20%2B%3D%20v%5Cnprint(f%5C%22the%20sum%20of%20the%20numbers%20at%20even%20indices%20is%20%7Bsum_gusu_idx%7D.%5C%22)%22%5D%5D)
 
+# 2. ダウンロード
+
+https://github.com/toyohisa2nakada/typing/tree/main
+
+ライブラリは、keygraph.js ファイルです。
+simple_typing_game.htmlファイルがライブラリを使ったタイピングゲームの例です。
+simple_typing_game.htmlでは、keygraph.js以外にsound.jsファイルも読み込みます。
+
+# 3. ライブラリの使い方
+
+```html:simple_typing_game.html
+<!-- ライブラリの読み込み -->
+<script src="keygraph.js"></script>
+
+<script>
+    // DAGの作成、keygraph.jsを読み込むとkeygraph変数が使えるようになります。
+    keygraph.build("ひっしゅう");
+
+    // これから打つキー、すでに打ったキーを表示、 ... は適宜変更してください。
+    const disp = ()=>{
+        // これからタイプしなければいけないキーの取得
+        document.getElementById("...").innerText = keygraph.key_candidate();
+
+        // タイプし終わったキーの取得
+        document.getElementById("...").innerText = keygraph.key_done();
+
+        // これから打つ ひらがな の取得
+        document.getElementById("...").innerText = keygraph.seq_candidates();
+    
+        // 打ち終わった ひらがな の取得
+        document.getElementById("...").innerText = keygraph.seq_done();
+    }
+
+    // keydownのイベント処理
+    document.body.addEventListener("keydown", e => {
+        if (keygraph.next(e.key)) {
+            // 入力がタイピングするキーと一致している場合
+        }
+        if (keygraph.is_finished()) {
+            // すべての文字をタイプし終わったとき
+        }
+        disp();
+    });
+    disp();
+</script>
+```
+
+
+<details><summary>これからタイプしなければいけないローマ字について</summary><div>
+タイピングゲームでは、タイプするローマ字を画面に表示することがよくあります。例えば「ひっしゅう」ならば「hisshu」という文字が表示されて、すでに打った文字が暗くなったりしてどこまで打ったのかをユーザが分かるようにします。この「hisshu」に相当する文字列を取得するのが keygraph.key_candidate 関数です。keygraph.key_candidateは、「hisshu」や「hisshilyuu」のように複数のパターンから「1つ」が選ばれて文字列として戻るわけですが、その選ばれる基準は、keygraph.jsファイルの下の方で定義されている_char_keys_tableリストの順序で決まります。リストの上の方、また同じ ひらがな ならば keys変数で定義されたキー候補の左の方が優先されます。例えば「っしゅ」の場合、_char_keys_tableリストの「っ」「っし」「っしゅ」の3つがまず候補になるのですが、最もリストの上にある「っしゅ」が選ばれます。そして「っしゅ」のキー候補である["ssyu", "sshu"]のうち左側の"ssyu"が選ばれることになります。例えば「っし」が_char_keys_tableリストの上位にあれば「っし」のkeys変数の左側が選ばれ、そして残りの文字の「ゅ」の定義の中でkeys変数の左側のローマ字が選ばれて全部のローマ字が完成するということになります。よって画面に表示するローマ字を変更したい場合、_char_keys_tableリストのデータの順序を入れ替えることで対応できます。
+</div></details>
 
 
 詳しくは[Qiitaの記事](https://qiita.com/toyohisa/items/17c8c0c8342b894e2470)をご覧ください。
