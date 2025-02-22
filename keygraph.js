@@ -296,7 +296,7 @@ const keygraph = {
                 // 文字シーケンスが指定されたキーで始まる可能性があるかどうか確認する
                 const key_startsWith = (seq, ks) => {
                     return this._char_keys_table.filter(ckeys => seq.startsWith(ckeys.char)).some(ckeys =>
-                        ckeys.keys.some(key => ks.includes(key[0]))
+                        (typeof (ckeys.keys) === "function" ? ckeys.keys.bind(this)(seq) : ckeys.keys).some(key => ks.includes(key[0]))
                     );
                 };
                 // 「ん」が最後の1文字または「ん」の次の文字が母音またはn,yで始まる場合は、n 1つでの処理はできない。
@@ -611,6 +611,19 @@ const keygraph = {
         { char: "っろ", keys: ["rro"] },
         { char: "っわ", keys: ["wwa"] },
         { char: "っを", keys: ["wwo"] },
+        { char: "っぁ", keys: ["xxa","lla"]},
+        { char: "っぃ", keys: ["xxi","lli"]},
+        { char: "っぅ", keys: ["xxu","llu"]},
+        { char: "っぇ", keys: ["xxe","lle"]},
+        { char: "っぉ", keys: ["xxo","llo"]},
+        { char: "っヵ", keys: ["xxka","llka"]},
+        { char: "っヶ", keys: ["xxke","llke"]},
+        { char: "っっ", keys: ["xxtu","lltu"]},
+        { char: "っゃ", keys: ["xxya","llya"]},
+        { char: "っゅ", keys: ["xxyu","llyu"]},
+        { char: "っょ", keys: ["xxyo","llyo"]},
+        { char: "っゎ", keys: ["xxwa","llwa"]},
+        { char: "っん", keys: ["xxn"]},
 
         // 一文字コード
         { char: "あ", keys: ["a"] },
