@@ -208,6 +208,10 @@ export const keygraph = {
     seq_candidates: function () {
         return this._seq?.substring(this._seq_ptr_cur);
     },
+    // 次に打つ日本語の位置、0の場合はすべてこれから
+    seq_ptr: function () {
+        return this._seq_ptr_cur;
+    },
 
     // キーチェインの1つのノードを表す。
     // キーチェインは有向非循環グラフ(DAG)となる。
