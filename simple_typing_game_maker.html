@@ -126,6 +126,9 @@
 
     // ひらがなの取得
     const get_hiragana = async (kanji) => {
+        
+        return kanji;
+        
         if (kanji.length === 0) {
             return "";
         }
@@ -210,12 +213,13 @@
     // 改行を含めて1文章とするチェックボックスを変更した後
     elems["texttype_program"].addEventListener("change", e => {
         set_to_run_translater();
-    })
+    });
 
 
     // urlのコピー機能
     // 配列の最初でオブジェクトを作成して、そのあとの関数で値をセットする。
-    Array.prototype.a2e = function () { return this.reduce((e, f) => { f(e); return e; }); }
+    // Array.prototype.a2e = function () { return this.reduce((e, f) => { f(e); return e; }); }
+    [Array, "a2e"].reduce((a, e) => { a.prototype[e] = function () { return this.reduce((e, f) => { f(e); return e; }); }; Object.defineProperty(a.prototype, e, { enumerable: false }); });
     elems["typing_url_panel"].style.position = "relative";
     elems["typing_url_panel"].addEventListener("mouseenter", event => {
         const create_icon_button = (cls, text, onclick) => {
