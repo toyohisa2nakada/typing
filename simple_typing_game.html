@@ -5,7 +5,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>simple typing game</title>
     <script src="sound.js"></script>
-    <script src="keygraph.js"></script>
     <style>
         /* 画面上のトップレベル要素 */
         .inner {
@@ -69,9 +68,12 @@
     </div>
 </body>
 
-<script>
+<script type="module">
     // sound.jsの初期化
     sound.init();
+
+    // keygraphの読み込み
+    import { keygraph } from "./keygraph.js";
 
     // タイプする文章
     let dataset = [

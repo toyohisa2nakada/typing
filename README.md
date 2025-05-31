@@ -24,10 +24,11 @@ simple_typing_game.htmlでは、keygraph.js以外にsound.jsファイルも読�
 # 3. ライブラリの使い方
 
 ```html:simple_typing_game.html
-<!-- ライブラリの読み込み -->
-<script src="keygraph.js"></script>
 
-<script>
+<script type="module">
+    // ライブラリの読み込み(type="module"のスクリプトで実行してください)
+    import { keygraph } from "./keygraph.js";
+    
     // DAGの作成、keygraph.jsを読み込むとkeygraph変数が使えるようになります。
     keygraph.build("ひっしゅう");
 

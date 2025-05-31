@@ -1,6 +1,6 @@
 /*
 読み込み
-<script src="keygraph.js"></script>
+import { keygraph } from "./keygraph.js";
 
 タイプする文字の初期化
 文字はひらがなと一部のカタカナ、半角文字等、詳細は、_char_keys_table 変数で定義されている str 変数を参照のこと。
@@ -28,7 +28,7 @@ if( keygraph.next(e.key) ){
     // 不正解の場合
 }
 */
-const keygraph = {
+export const keygraph = {
     // キーチェインの作成、初期化
     build: function (seq) {
         // タイプする文字列の保存、入力補完の初期化
