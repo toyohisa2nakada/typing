@@ -73,7 +73,8 @@
     sound.init();
 
     // keygraphの読み込み
-    import { keygraph } from "./keygraph.js";
+    import { build_keygraph } from "./keygraph.js";
+    const keygraph = build_keygraph();
 
     // タイプする文章
     let dataset = [
