@@ -29,7 +29,7 @@ if( keygraph.next(e.key) ){
     // 不正解の場合
 }
 */
-export function build_keygraph() {
+function build_keygraph() {
     return {
         // キーチェインの作成、初期化
         build: function (seq) {
@@ -561,7 +561,7 @@ export function build_keygraph() {
             { char: "っき", keys: ["kki",] },
             { char: "っく", keys: ["kku", "qqu"] },
             { char: "っけ", keys: ["kke"] },
-            { char: "っこ", keys: ["kko"] },
+            { char: "っこ", keys: ["kko", "cco"] },
             { char: "っが", keys: ["gga",] },
             { char: "っぎ", keys: ["ggi",] },
             { char: "っぐ", keys: ["ggu"] },
@@ -641,11 +641,11 @@ export function build_keygraph() {
             { char: "き", keys: ["ki"] },
             { char: "く", keys: ["ku", "cu", "qu"] },
             { char: "け", keys: ["ke"] },
-            { char: "こ", keys: ["ko"] },
+            { char: "こ", keys: ["ko", "co"] },
             { char: "さ", keys: ["sa"] },
             { char: "し", keys: ["si", "shi", "ci"] },
             { char: "す", keys: ["su"] },
-            { char: "せ", keys: ["se"] },
+            { char: "せ", keys: ["se", "ce"] },
             { char: "そ", keys: ["so"] },
             { char: "た", keys: ["ta"] },
             { char: "ち", keys: ["chi", "ti"] },
@@ -793,3 +793,9 @@ export function build_keygraph() {
         ],
     }
 }
+
+if (typeof window.build_keygraph === 'undefined') {
+    window.build_keygraph = build_keygraph;
+}
+export { build_keygraph };
+
